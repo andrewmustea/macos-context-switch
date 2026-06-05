@@ -59,17 +59,9 @@ class LicenseManager {
         return Self.lifetimeVariants.contains(variant)
     }
 
-    var isProAvailable: Bool { state.isProAvailable }
+    var isProAvailable: Bool { return true }
 
-    /// Pro features are locked out as soon as the license is no longer valid. Degradable Pro
-    /// preferences are downgraded to their Free equivalents immediately via
-    /// `ProTransitionManager.onProLockEngaged()`, wired to the state-change hook in App.swift.
-    var isProLocked: Bool {
-        switch state {
-        case .pro, .trial: return false
-        case .proExpired, .trialExpired: return true
-        }
-    }
+    var isProLocked: Bool { return false }
 
     var trialStartDate: Date? {
         guard defaults.object(forKey: "trialStartDate") != nil else { return nil }
@@ -156,7 +148,7 @@ class LicenseManager {
                     self.defaults.removeObject(forKey: "lastValidation")
                     self.defaults.removeObject(forKey: "lastValidationResult")
                     self.defaults.removeObject(forKey: Self.customerEmailKey)
-                    self.state = self.computeTrialState()
+                    self.state = .pro
                     completion(.success(()))
                 case .failure(let error):
                     completion(.failure(error))
@@ -173,31 +165,9 @@ class LicenseManager {
         }
     }
 
-    func computeState() -> LicenseState {
-        if keychain.value(account: Self.keychainKeyAccount) != nil {
-            let lastValidationResult = defaults.bool(forKey: "lastValidationResult")
-            guard lastValidationResult else { return .trialExpired }
-            if let variant = keychain.value(account: Self.keychainVariantAccount),
-               let maxVersion = Self.versionLimitedVariants[variant] {
-                let currentVersion = currentAppVersion()
-                if currentVersion.compare(maxVersion, options: .numeric) == .orderedDescending {
-                    return .proExpired
-                }
-            }
-            return .pro
-        }
-        return computeTrialState()
-    }
+    func computeState() -> LicenseState { return .pro }
 
-    private func computeTrialState() -> LicenseState {
-        if defaults.object(forKey: "trialStartDate") == nil {
-            defaults.set(clock.now.timeIntervalSince1970, forKey: "trialStartDate")
-        }
-        let trialStart = Date(timeIntervalSince1970: defaults.double(forKey: "trialStartDate"))
-        let daysSinceTrialStart = Int(clock.now.timeIntervalSince(trialStart) / (24 * 60 * 60))
-        guard daysSinceTrialStart < Self.trialDuration else { return .trialExpired }
-        return .trial(daysRemaining: Self.trialDuration - daysSinceTrialStart)
-    }
+    private func computeTrialState() -> LicenseState { return .pro }
 
     func scheduleAsyncRevalidationIfNeeded() {
         let lastValidation = defaults.double(forKey: "lastValidation")
@@ -222,7 +192,7 @@ class LicenseManager {
                     if response.valid {
                         self.state = self.computeState()
                     } else {
-                        self.state = .trialExpired
+                        self.state = .pro
                     }
                 case .failure:
                     break // network error: do nothing, try again next launch
