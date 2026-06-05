@@ -1,7 +1,5 @@
-<div align="center">
+# ContextSwitch
 
-<a href="https://alt-tab.app/"><img src="docs/readme/main.svg" alt="AltTab Pro — 7.4M downloads — 15K GitHub stars — Get AltTab"/></a>
-
-<a href="https://jb.gg/OpenSource"><img src="docs/readme/sponsor.svg" alt="Sponsored by JetBrains" width="900"/></a>
-
-</div>
+AltTab recently removed free features and placed them behind a paywall while
+also removing all previous free-only binaries. This fork removes those
+paywalls.
