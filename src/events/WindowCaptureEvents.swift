@@ -279,7 +279,7 @@ extension SCStreamConfiguration {
     // (Window properties are mutated on main and would race with this background work).
     static func forWindow(_ scWindow: SCWindow, _ size: CGSize, _ scaleFactor: CGFloat, _ video: Bool) -> SCStreamConfiguration {
         let config = SCStreamConfiguration()
-        config.setWindowSize(size, scaleFactor)
+        if #available(macOS 13.0, *) { config.setWindowSize(size, scaleFactor) }
         config.pixelFormat = kCVPixelFormatType_32BGRA
         config.showsCursor = false
         // if video {
@@ -295,6 +295,7 @@ extension SCStreamConfiguration {
         return config
     }
 
+    @available(macOS 13.0, *)
     private func setWindowSize(_ size: CGSize, _ scaleFactor: CGFloat) {
         // window.size is the logical size and doesn't change with scaleFactor. We need to correct for this as we need to capture more or less pixels depending on DPI.
         let originalSize = NSSize(width: size.width * scaleFactor, height: size.height * scaleFactor)
